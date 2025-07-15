@@ -1,12 +1,11 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
-import os
 import json
 from typing import Optional
 
 def get_firebase_config():
-    firebase_key = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY')
+    firebase_key = st.secrets['FIREBASE_SERVICE_ACCOUNT_KEY']
     if firebase_key:
         try:
             return json.loads(firebase_key)
@@ -14,11 +13,11 @@ def get_firebase_config():
             print(f"Error parsing FIREBASE_SERVICE_ACCOUNT_KEY: {str(e)}")
             raise
 
-    google_creds_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-    if google_creds_path and os.path.exists(google_creds_path):
+    google_creds_path = st.secrets['GOOGLE_APPLICATION_CREDENTIALS']
+    if google_creds_path:
         return google_creds_path
         
-    project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+    project_id = st.secrets['GOOGLE_CLOUD_PROJECT']
     if not project_id:
         raise ValueError(
             "Firebase configuration not found. Please set one of:\n"
@@ -47,17 +46,17 @@ def initialize_firebase():
         else:
             cred = credentials.Certificate(firebase_config)
        
-        project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+        project_id = st.secrets['GOOGLE_CLOUD_PROJECT']
         if project_id:
             firebase_admin.initialize_app(cred, {'projectId': project_id})
         else:
             firebase_admin.initialize_app(cred)
         
-        print("Firebase initialized successfully")
+       # print("Firebase initialized successfully")
         return firestore.client()
         
     except Exception as e:
-        print(f"❌ Error initializing Firebase: {str(e)}")
+        print(f"Error initializing Firebase: {str(e)}")
         raise
 
 def get_db():
@@ -76,12 +75,12 @@ def save_unanswered_question(question_english):
                 "qn": qn_list
             }, merge=True)
             
-            print(f"✅ Unanswered question saved for doctor review: {question_english}")
+            print(f"Unanswered question saved for doctor review: {question_english}")
         else:
-            print(f"ℹ️  Question already exists in unanswered list: {question_english}")
+            print(f"Question already exists in unanswered list: {question_english}")
             
     except Exception as e:
-        print(f"❌ Error saving unanswered question: {str(e)}")
+        print(f"Error saving unanswered question: {str(e)}")
         raise e
 
 def save_user_interaction(question_english, answer_english, user_session_id=None):
@@ -106,8 +105,8 @@ def save_user_interaction(question_english, answer_english, user_session_id=None
 
         db.collection("user").add(interaction_data)
         
-        print(f"✅ User interaction saved: Q: {question_english[:50]}...")
+        print(f"User interaction saved: Q: {question_english[:50]}...")
         
     except Exception as e:
-        print(f"❌ Error saving user interaction: {str(e)}")
+        print(f"Error saving user interaction: {str(e)}")
         raise e

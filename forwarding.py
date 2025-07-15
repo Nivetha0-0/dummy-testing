@@ -13,7 +13,7 @@ def get_firebase_config():
             print(f"Error parsing FIREBASE_SERVICE_ACCOUNT_KEY: {str(e)}")
             raise
 
-    google_creds_path = st.secrets['GOOGLE_APPLICATION_CREDENTIALS']
+    google_creds_path = st.secrets['GOOGLE_APPLICATION_CREDENTIALS')=]
     if google_creds_path:
         return google_creds_path
         
@@ -35,7 +35,7 @@ def get_firebase_config():
 
 def initialize_firebase():
     if firebase_admin._apps:
-        print("Firebase already initialized, using existing app")
+        print("ℹ️  Firebase already initialized, using existing app")
         return firestore.client()
     
     try:
@@ -52,11 +52,11 @@ def initialize_firebase():
         else:
             firebase_admin.initialize_app(cred)
         
-       # print("Firebase initialized successfully")
+        print("✅ Firebase initialized successfully")
         return firestore.client()
         
     except Exception as e:
-        print(f"Error initializing Firebase: {str(e)}")
+        print(f"❌ Error initializing Firebase: {str(e)}")
         raise
 
 def get_db():
@@ -75,12 +75,12 @@ def save_unanswered_question(question_english):
                 "qn": qn_list
             }, merge=True)
             
-            print(f"Unanswered question saved for doctor review: {question_english}")
+            print(f"✅ Unanswered question saved for doctor review: {question_english}")
         else:
-            print(f"Question already exists in unanswered list: {question_english}")
+            print(f"ℹ️  Question already exists in unanswered list: {question_english}")
             
     except Exception as e:
-        print(f"Error saving unanswered question: {str(e)}")
+        print(f"❌ Error saving unanswered question: {str(e)}")
         raise e
 
 def save_user_interaction(question_english, answer_english, user_session_id=None):
@@ -105,8 +105,8 @@ def save_user_interaction(question_english, answer_english, user_session_id=None
 
         db.collection("user").add(interaction_data)
         
-        print(f"User interaction saved: Q: {question_english[:50]}...")
+        print(f"✅ User interaction saved: Q: {question_english[:50]}...")
         
     except Exception as e:
-        print(f"Error saving user interaction: {str(e)}")
+        print(f"❌ Error saving user interaction: {str(e)}")
         raise e

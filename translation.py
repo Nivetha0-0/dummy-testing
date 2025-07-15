@@ -2,31 +2,39 @@ import os
 import json
 import tempfile
 import streamlit as st
-from google.cloud import translate
-from google.cloud import texttospeech
-from google.cloud import speech
-from typing import Optional, List
+from google.cloud import translate 
+from google.cloud import texttospeech 
+from google.cloud import speech 
+from typing import Optional, List, Type, TypeVar
 
-# Global clients
+GCClient = TypeVar('GCClient')
 _translator_client = None
 _texttospeech_client = None
 _speech_client = None
 
-def _initialize_gc_client(client_class) -> Optional:
+def _initialize_gc_client(client_class: Type[GCClient]) -> Optional[GCClient]:
     try:
-        creds = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
-        if isinstance(creds, str):
-            creds = json.loads(creds)
-
+        # Create a temporary file for the service account credentials
+        service_account_info = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
+        
+        # If it's a string, parse it as JSON
+        if isinstance(service_account_info, str):
+            service_account_info = json.loads(service_account_info)
+        
+        # Create temporary file with credentials
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
-            json.dump(creds, temp_file)
+            json.dump(service_account_info, temp_file)
             temp_credentials_path = temp_file.name
-
+        
+        # Set the environment variable
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
+        
         client = client_class()
+        
+        # Clean up the temporary file
         os.unlink(temp_credentials_path)
+        
         return client
-
     except Exception as e:
         print(f"Error initializing Google Cloud {client_class.__name__}: {e}")
         return None
@@ -53,22 +61,32 @@ def get_supported_languages(client, allowed_langs: Optional[List[str]] = None) -
     if not client:
         return {}
     try:
-        parent = f"projects/{st.secrets['GOOGLE_CLOUD_PROJECT']}/locations/global"
+        project_id = st.secrets["GOOGLE_CLOUD_PROJECT"]
+        parent = f"projects/{project_id}/locations/global"
         response = client.get_supported_languages(parent=parent, display_language_code='en')
-        return {
-            lang.language_code: lang.display_name or lang.language_code
-            for lang in response.languages
-            if not allowed_langs or lang.language_code in allowed_langs
-        }
+
+        languages = {}
+        for lang in response.languages:
+            if allowed_langs and lang.language_code not in allowed_langs:
+                continue
+
+            display_name = lang.display_name if lang.display_name else lang.language_code
+            languages[lang.language_code] = display_name
+        return languages
     except Exception as e:
-        print(f"Error fetching supported languages: {e}")
+        print(f"Error fetching supported languages (V3): {e}")
         return {}
 
 def translate_text(client, text: Optional[str], target_language_code: str, source_language_code: str) -> Optional[str]:
-    if not text or not client or source_language_code == target_language_code:
+    if not text or not client:
         return text
+
+    if source_language_code == target_language_code:
+        return text
+
     try:
-        parent = f"projects/{st.secrets['GOOGLE_CLOUD_PROJECT']}/locations/global"
+        project_id = st.secrets["GOOGLE_CLOUD_PROJECT"]
+        parent = f"projects/{project_id}/locations/global"
         response = client.translate_text(
             request={
                 "parent": parent,
@@ -78,12 +96,13 @@ def translate_text(client, text: Optional[str], target_language_code: str, sourc
                 "target_language_code": target_language_code,
             }
         )
-        return response.translations[0].translated_text
+        translated_text = response.translations[0].translated_text
+        return translated_text
     except Exception as e:
-        print(f"Error translating text: {e}")
+        print(f"Error translating text (V3): {e}")
         return None
 
-# Helper functions to access secrets
+# Helper functions to access other secrets
 def get_openai_key() -> str:
     return st.secrets["OPENAI_KEY"]
 
@@ -91,8 +110,10 @@ def get_mongodb_uri() -> str:
     return st.secrets["MONGODB_URI"]
 
 def get_firebase_service_account_key():
-    key = st.secrets["FIREBASE_SERVICE_ACCOUNT_KEY"]
-    return json.loads(key) if isinstance(key, str) else key
+    firebase_key = st.secrets["FIREBASE_SERVICE_ACCOUNT_KEY"]
+    if isinstance(firebase_key, str):
+        return json.loads(firebase_key)
+    return firebase_key
 
 def get_google_cloud_project() -> str:
     return st.secrets["GOOGLE_CLOUD_PROJECT"]

@@ -1,12 +1,12 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
-import streamlit as st
+import os
 import json
 from typing import Optional
 
 def get_firebase_config():
-    firebase_key = st.secrets.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+    firebase_key = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY')
     if firebase_key:
         try:
             return json.loads(firebase_key)
@@ -14,11 +14,11 @@ def get_firebase_config():
             print(f"❌ Error parsing FIREBASE_SERVICE_ACCOUNT_KEY: {str(e)}")
             raise
 
-    google_creds_path = st.secrets.get('GOOGLE_APPLICATION_CREDENTIALS')
-    if google_creds_path:
+    google_creds_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+    if google_creds_path and os.path.exists(google_creds_path):
         return google_creds_path
         
-    project_id = st.secrets.get('GOOGLE_CLOUD_PROJECT')
+    project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
     if not project_id:
         raise ValueError(
             "Firebase configuration not found. Please set one of:\n"
@@ -47,7 +47,7 @@ def initialize_firebase():
         else:
             cred = credentials.Certificate(firebase_config)
        
-        project_id = st.secrets.get('GOOGLE_CLOUD_PROJECT')
+        project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         if project_id:
             firebase_admin.initialize_app(cred, {'projectId': project_id})
         else:

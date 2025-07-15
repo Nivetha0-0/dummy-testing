@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from pymongo.mongo_client import MongoClient
 
 from google.cloud import translate, texttospeech, speech
-from tran_works import (
+from translation import (
     get_translator_client, get_texttospeech_client, get_speech_client,
     translate_text, get_supported_languages
 )
@@ -135,7 +135,7 @@ question: {modified_user_input}"""
                 else:
                     bot_response_english = "I am unable to answer your question at the moment. The Doctor has been notified. Please check back later."
                     try:
-                        from forwarding_works import save_unanswered_question
+                        from forwardingimport save_unanswered_question
                         save_unanswered_question(user_input_english)
                     except Exception as e:
                         st.error(f"Error forwarding question: {e}")
@@ -154,7 +154,7 @@ question: {modified_user_input}"""
     st.session_state.chat_history.append((user_input_original, bot_response))
 
     try:
-        from forwarding_works import save_user_interaction
+        from forwarding import save_user_interaction
         session_id = getattr(st.session_state, 'session_id', None)
         if classification_category != 'Casual Greeting' and not bot_response_english.startswith("Sorry"):
             save_user_interaction(user_input_english, bot_response_english, session_id)

@@ -15,7 +15,7 @@ from typing import Literal, Optional, List, cast
 from google.cloud import translate
 from google.cloud import texttospeech
 from google.cloud import speech
-from tran_works import get_translator_client, get_texttospeech_client, get_speech_client, translate_text, get_supported_languages
+from translation import get_translator_client, get_texttospeech_client, get_speech_client, translate_text, get_supported_languages
 
 # Initialize Google Cloud clients
 translator_client: Optional[translate.TranslationServiceClient] = get_translator_client()
@@ -183,7 +183,7 @@ latest_user_input:{user_input_english}"""
                     bot_response_english = "I am unable to answer your question at the moment. The Doctor has been notified, please check back in a few days."
 
                     try:
-                        from forwarding_works import save_unanswered_question
+                        from forwarding import save_unanswered_question
                         save_unanswered_question(user_input_english)
                     except Exception as e:
                         st.error(f"Error forwarding question to doctor: {e}")
@@ -203,7 +203,7 @@ latest_user_input:{user_input_english}"""
     bot_response = translate_text(translator_client, bot_response_english, current_selected_language, DEFAULT_LANGUAGE)
 
     try:
-        from forwarding_works import save_user_interaction
+        from forwarding import save_user_interaction
         user_session_id = getattr(st.session_state, 'session_id', None)
     
         # Responses that should NOT be saved

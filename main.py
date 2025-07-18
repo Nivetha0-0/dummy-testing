@@ -267,9 +267,10 @@ def display_chat():
 
         if audio_file_path and os.path.exists(audio_file_path):
             with st.container():
-                audio_file = open(audio_file_path, "rb")
-                audio_bytes = audio_file.read()
-                st.audio(audio_bytes, format="audio/mp3", start_time=0)
+                if st.button(f" play response {i},key=f"play_audio_btn_{i}"):
+                    audio_file = open(audio_file_path, "rb")
+                    audio_bytes = audio_file.read()
+                    st.audio(audio_bytes, format="audio/mp3", start_time=0)
 
 def set_language():
     st.session_state.selected_language = st.session_state.lang_selector
